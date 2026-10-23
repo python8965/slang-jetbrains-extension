@@ -1,9 +1,9 @@
 <idea-plugin>
-    <id>slanglsp</id>
+    <id>slanglsp.python8965</id>
 
-    <name>Slang [Unofficial]</name>
+    <name>Slang [Unofficial] Game Fork</name>
 
-    <vendor email="aglasroth@gmail.com">16-Bit-Dog</vendor>
+    <vendor>python8965 (based on 16-Bit-Dog)</vendor>
 
     <description>
         <![CDATA[
@@ -22,6 +22,15 @@
     <extensions defaultExtensionNs="com.intellij">
         <fileType name="Slang" implementationClass="slanglsp.SlangFileType" fieldName="INSTANCE" language="Slang" extensions="slang;slangh"/>
         
+        <!-- Token-level PSI gives native IntelliJ navigation an accurate file/token tree.
+             Semantic resolution continues to come from slangd/LSP4IJ. -->
+        <lang.parserDefinition language="Slang"
+                              implementationClass="slanglsp.SlangParserDefinition"/>
+        <lang.findUsagesProvider language="Slang"
+                                implementationClass="slanglsp.SlangFindUsagesProvider"/>
+        <lang.foldingBuilder language="Slang"
+                             implementationClass="com.redhat.devtools.lsp4ij.features.foldingRange.LSPFoldingRangeBuilder"/>
+
         <lang.syntaxHighlighterFactory language="Slang" implementationClass="slanglsp.SlangSyntaxHighlighterFactory"/>
 
         <codeInsight.parameterInfo

@@ -59,3 +59,20 @@ The LSP mapping includes both `.slang` and `.slangh`. Definition, hover,
 references/Find Usages and rename requests use the installed LSP4IJ and
 `slangd`; these features depend on the language server's advertised
 capabilities and will not silently replace project symbols with a text search.
+
+
+### Navigation, folding and refactoring
+
+A token-level PSI parser and Find Usages word scanner are registered for
+`.slang` and `.slangh`, without replacing the original working lexer.
+LSP4IJ provides semantic definitions, references, hover, symbol rename
+(if `slangd` advertises `textDocument/rename`), and formatting
+(if `slangd` and `clang-format` are installed and support it).
+Folding is delegated to LSP4IJ's folding-range feature.
+
+The Refined fork has an additional **rename fallback** for language servers
+that do not support Rename; this safety-sensitive feature is **not** included
+here. We do not perform blind project-wide text replacement.
+
+This is a separate plugin ID (`slanglsp.python8965`). Disable the original
+Slang plugin when testing, since both register the same `.slang` file type.
