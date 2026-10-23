@@ -30,7 +30,7 @@ class SlangPersistentStateConfig implements PersistentStateComponent<SlangPersis
     {
         // TODO: make a cached state which transforms this State into an efficent to compare state (assumes rare to change settings)
         public List<String> additionalIncludePaths = new ArrayList<>();
-        public List<String> predefinedMacros = List.of("__EXAMPLE_MACRO1", "__EXAMPLE_MACRO2=VALUE");
+        public List<String> predefinedMacros = new ArrayList<>();
 
         public String explicitSlangdLocation = "";
 //        public String traceServer = "off"; // handled by LSP4IJ's (runtime) debug tool
@@ -63,45 +63,39 @@ class SlangPersistentStateConfig implements PersistentStateComponent<SlangPersis
                 ;
         }
 
-        Object createJSONFromObject()
+        // LSP4IJ expects a JSON object with the original JSON value types.
+        JsonObject createJSONFromObject(java.nio.file.Path projectRoot)
         {
-            Gson gson = new Gson();
-            Map<String, String> stringMap = new HashMap<>();
+            JsonObject settings = new JsonObject();
+            JsonArray searchPaths = new JsonArray();
+            for (String path : SlangProjectSearchPaths.discover(projectRoot, additionalIncludePaths))
+                searchPaths.add(path);
+            settings.add("slang.additionalSearchPaths", searchPaths);
 
-            String additionalIncludePathsKey = "slang.additionalSearchPaths";
-            String additionalIncludePathsJson = gson.toJson(additionalIncludePaths);
-            stringMap.put(additionalIncludePathsKey, additionalIncludePathsJson);
+            JsonArray macros = new JsonArray();
+            for (String macro : predefinedMacros)
+                if (macro != null && !macro.isBlank()) macros.add(macro.trim());
+            settings.add("slang.predefinedMacros", macros);
 
-            String predefinedMacrosKey = "slang.predefinedMacros";
-            String predefinedMacrosJson = gson.toJson(predefinedMacros);
-            stringMap.put(predefinedMacrosKey, predefinedMacrosJson);
-
-            String enableCommitCharactersInAutoCompletionKey = "slang.enableCommitCharactersInAutoCompletion";
-            String enableCommitCharactersInAutoCompletionJson = gson.toJson(enableCommitCharactersInAutoCompletion);
-            stringMap.put(enableCommitCharactersInAutoCompletionKey, enableCommitCharactersInAutoCompletionJson);
-
-            String enableInlayHintsForDeducedTypesKey = "slang.inlayHints.deducedTypes";
-            String enableInlayHintsForDeducedTypesJson = gson.toJson(enableInlayHintsForDeducedTypes);
-            stringMap.put(enableInlayHintsForDeducedTypesKey, enableInlayHintsForDeducedTypesJson);
-
-            String enableInlayHintsForParameterNamesKey = "slang.inlayHints.parameterNames";
-            String enableInlayHintsForParameterNamesJson = gson.toJson(enableInlayHintsForParameterNames);
-            stringMap.put(enableInlayHintsForParameterNamesKey, enableInlayHintsForParameterNamesJson);
-
-            String enableSearchingSubDirectoriesOfWorkspaceKey = "slang.searchInAllWorkspaceDirectories";
-            String enableSearchingSubDirectoriesOfWorkspaceJson = gson.toJson(enableSearchingSubDirectoriesOfWorkspace);
-            stringMap.put(enableSearchingSubDirectoriesOfWorkspaceKey, enableSearchingSubDirectoriesOfWorkspaceJson);
-
-            return gson.toJson(stringMap);
+            settings.addProperty("slang.enableCommitCharactersInAutoCompletion",
+                enableCommitCharactersInAutoCompletion);
+            settings.addProperty("slang.inlayHints.deducedTypes",
+                Boolean.TRUE.equals(enableInlayHintsForDeducedTypes));
+            settings.addProperty("slang.inlayHints.parameterNames",
+                Boolean.TRUE.equals(enableInlayHintsForParameterNames));
+            settings.addProperty("slang.searchInAllWorkspaceDirectories",
+                Boolean.TRUE.equals(enableSearchingSubDirectoriesOfWorkspace));
+            return settings;
         }
     }
 
     @NotNull
     private State state = new State();
 
-    Object createJSONFromObject()
+    JsonObject createJSONFromObject(Project project)
     {
-        return state.createJSONFromObject();
+        String basePath = project.getBasePath();
+        return state.createJSONFromObject(basePath == null ? null : java.nio.file.Paths.get(basePath));
     }
 
     String getExplicitSlangdLocation()

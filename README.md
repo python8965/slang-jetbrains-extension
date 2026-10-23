@@ -39,3 +39,23 @@ The project contains native Java tests to verify Lexer and Syntax Highlighter co
 ./gradlew test
 ```
 
+
+
+### Game workspace import resolution
+
+The plugin automatically adds Slang search roots from the open project:
+`assets/shaders`, every existing `crates/*/assets/shaders` directory,
+and `benches/*/assets/shaders`. Manual include paths in
+**Settings → Tools → Slang** take precedence. The server receives typed
+`slang.additionalSearchPaths` and `slang.predefinedMacros` settings.
+Unlike the Rust shader compiler, `slangd` does not receive per-shader
+command-line defines; use the project macros setting where needed.
+
+The game generates `assets/shaders/Generated/*.slang` via Rust
+`#[shader_export]` macros. Run `cargo check -p game` in the game workspace
+at least once if imports under `Generated.*` are missing.
+
+The LSP mapping includes both `.slang` and `.slangh`. Definition, hover,
+references/Find Usages and rename requests use the installed LSP4IJ and
+`slangd`; these features depend on the language server's advertised
+capabilities and will not silently replace project symbols with a text search.
