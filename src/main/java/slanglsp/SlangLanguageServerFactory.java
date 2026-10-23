@@ -52,7 +52,7 @@ class SlangLanguageServer extends ProcessStreamConnectionProvider
         }
         if (exePath.isPresent())
         {
-            super.setCommands(List.of(exePath.get(), ""));
+            super.setCommands(List.of(exePath.get()));
             super.setWorkingDirectory(project.getBasePath());
         }
         else
@@ -62,7 +62,7 @@ class SlangLanguageServer extends ProcessStreamConnectionProvider
                 "`slangd`/`slangd.exe` was not found in the `PATH` environment variable. It is preferable to add (once the latest vulkan SDK is installed) `$VK_SDK_PATH/bin` to your `PATH` environment variable (on linux the paths *may* differ slightly) to use `slangd` bundled with the Vulkan SDK. After these steps, restart this IDE.",
                 NotificationType.ERROR
             ).notify(project);
-            LanguageServerManager.getInstance(project).stop("slangLanguageServer");
+            LanguageServerManager.getInstance(project).stop("slanglsp.SlangLanguageServer");
         }
     }
 
@@ -77,7 +77,7 @@ class SlangLanguageServer extends ProcessStreamConnectionProvider
         @Override
         public boolean accept(File dir, String name)
         {
-            return dir.canExecute() && name.contentEquals(getLspExeName());
+            return name.equals(getLspExeName()) && new File(dir, name).isFile();
         }
     }
 
@@ -179,10 +179,10 @@ class SlangLanguageClient extends LanguageClientImpl
         }
     }
 
-    public Object createSettings()
+    @Override
+    public com.google.gson.JsonObject createSettings()
     {
-        var state = SlangPersistentStateConfig.getInstance(project).getState();
-        return state.createJSONFromObject();
+        return SlangPersistentStateConfig.getInstance(project).createJSONFromObject(project);
     }
 
     public void triggerChangeConfiguration()
